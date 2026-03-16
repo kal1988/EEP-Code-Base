@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Services/" />
+  <Folder Name="/Services/RCM-Service/">
+    <Project Path="Services/RCM-Service/RCM.API/RCM.API.csproj" Id="496d2e1c-021a-4702-871f-290f67bb7f21" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="BuildingBlocks/BuildingBlocks/BuildingBlocks.csproj" Id="846d3016-af70-4f5b-a846-b1b598828e9a" />
+  </Folder>
+</Solution>
