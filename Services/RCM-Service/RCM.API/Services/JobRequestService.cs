@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BuildingBlocks.SAPIntegrations.DTOs;
 using BuildingBlocks.SAPIntegrations.SapService;
 using RCM.API.Featuers.RequestForJobPost;
 using RCM.API.Featuers.RequestForJobPost.CreateRequestForJobPost;
@@ -20,15 +21,19 @@ namespace RCM.API.Services
 
         public async Task<Guid> CreateRequest(CreateRequestForJobPostCommand command , CancellationToken ct)
         {
-            // 1️ Validate positions from SAP
+            // Validate positions from SAP
             var valid = await ValidatePositionsFromSap(command.PositionIds, ct);
             if (!valid)
                 throw new Exception("One or more PositionIds are not vacant in SAP");
+            // Validate postions request exists
+            var exists = await PositionAlreadyRequested(command.PositionIds, ct);
+            if (exists)
+                throw new Exception("One or more PositionIds is already requested for");
 
-            // 2️ Generate shared Request ID
+            // Generate shared Request ID
             var requestId = Guid.NewGuid();
 
-            // 3️ Loop through PositionIds, map and save each row
+            // Loop through PositionIds, map and save each row
             foreach (var positionId in command.PositionIds)
             {
                 var entity = _mapper.Map<JobRequestEntity>(command);  // VacantPostionCount = 1 automatically
@@ -38,7 +43,7 @@ namespace RCM.API.Services
                 await _uow.JobRequests.AddAsync(entity, ct);
             }
 
-            // 4️ Commit all at once
+            //  Commit all at once
             await _uow.CommitAsync(ct);
 
             return requestId;
@@ -57,6 +62,19 @@ namespace RCM.API.Services
             var allPositionsValid = PositionIds.All(p => sapPositionIds.Contains(p));
 
             return allPositionsValid;
+        }
+
+        public async Task<bool> PositionAlreadyRequested(List<string> PositionIds, CancellationToken ct)
+        {
+            var postions = await _uow.JobRequests.GetAllAsync(ct);
+
+            var existingPositionIds = postions
+                .Select(postions => postions.PositionId)
+                .ToHashSet();
+            var allExist = PositionIds.All(p=>existingPositionIds.Contains(p));
+
+            return allExist;
+
         }
     }
 }
