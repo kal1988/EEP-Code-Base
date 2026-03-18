@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace RCM.API.Infrastructure.Persistance.Migrations
 {
     /// <inheritdoc />
-    public partial class IntialCreate : Migration
+    public partial class UpdateJobRequestEntity : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,8 +16,13 @@ namespace RCM.API.Infrastructure.Persistance.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PositionIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    VacantPositionCount = table.Column<int>(type: "int", nullable: false)
+                    RequesterId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RequesterOrg = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RequestedPosition = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ChangedById = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ChangedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {

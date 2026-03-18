@@ -1,7 +1,9 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RCM.API.Featuers.RequestForJobPost.CreateRequestForJobPost;
+using RCM.API.Services;
 
 namespace RCM.API.Featuers.RequestForJobPost
 {
@@ -16,10 +18,12 @@ namespace RCM.API.Featuers.RequestForJobPost
         }
 
         [HttpPost]
-        public async Task<ActionResult<CreateRequestForJobPostResponse>> 
-        CreateRequest([FromBody] CreateRequestForJobPostCommand command, CancellationToken ct)
+        [Authorize]
+        public async Task<ActionResult<CreateRequestForJobPostResponse>> CreateRequest(
+            [FromBody] CreateRequestForJobPostCommand command,
+            CancellationToken ct)
         {
-            var result = await _mediator.Send(command,ct);
+            var result = await _mediator.Send(command, ct);
             return Ok(result);
         }
     }

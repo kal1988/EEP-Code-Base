@@ -8,10 +8,7 @@ namespace RCM.API.Mapping
     {
         public MappingProfiles()
         {
-            CreateMap<CreateRequestForJobPostCommand, JobRequestEntity>()
-                .ForMember(d => d.PositionId, o => o.Ignore())
-                .ForMember(d => d.VacantPositionCount, o => o.MapFrom(s => 1))
-                .ForMember(d => d.Id, o => o.Ignore());
+            CreateMap<CreateRequestForJobPostCommand, JobRequestEntity>();
                 
         }
     }

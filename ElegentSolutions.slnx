@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/Services/" />
+  <Folder Name="/Services/Auth-Service/">
+    <Project Path="Services/Auth-Service/IdentitySolution/IdentitySolution.csproj" Id="13d99cab-63a1-41d1-9206-7e579003c6f7" />
+  </Folder>
   <Folder Name="/Services/RCM-Service/">
     <Project Path="Services/RCM-Service/RCM.API/RCM.API.csproj" Id="496d2e1c-021a-4702-871f-290f67bb7f21" />
   </Folder>

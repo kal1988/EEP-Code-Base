@@ -19,27 +19,31 @@ namespace RCM.API.Services
             _sapService = sapService;
         }
 
-        public async Task<Guid> CreateRequest(CreateRequestForJobPostCommand command , CancellationToken ct)
+        public async Task<Guid> CreateRequest(CreateRequestForJobPostCommand command , string requesterId, string requesterOrg,CancellationToken ct)
         {
             // Validate positions from SAP
-            var valid = await ValidatePositionsFromSap(command.PositionIds, ct);
+            var valid = await ValidatePositionsFromSap(command.RequestedPosition, ct);
             if (!valid)
                 throw new Exception("One or more PositionIds are not vacant in SAP");
             // Validate postions request exists
-            var exists = await PositionAlreadyRequested(command.PositionIds, ct);
+            var exists = await PositionAlreadyRequested(command.RequestedPosition, ct);
             if (exists)
                 throw new Exception("One or more PositionIds is already requested for");
 
             // Generate shared Request ID
             var requestId = Guid.NewGuid();
+            var currentTime = DateTime.UtcNow;
 
             // Loop through PositionIds, map and save each row
-            foreach (var positionId in command.PositionIds)
+            foreach (var positionId in command.RequestedPosition)
             {
-                var entity = _mapper.Map<JobRequestEntity>(command);  // VacantPostionCount = 1 automatically
-                entity.Id = requestId;                                 // shared request ID
-                entity.PositionId = positionId;                        // set current position
-
+                var entity = _mapper.Map<JobRequestEntity>(command);
+                entity.Id = requestId;
+                entity.RequestedPosition = positionId;
+                entity.RequesterId = requesterId; //get this from current logged in user
+                entity.RequesterOrg = requesterOrg; //Get this from sap 
+                entity.ChangedById = requesterId; //
+                entity.ChangedAt = currentTime;
                 await _uow.JobRequests.AddAsync(entity, ct);
             }
 
@@ -64,14 +68,14 @@ namespace RCM.API.Services
             return allPositionsValid;
         }
 
-        public async Task<bool> PositionAlreadyRequested(List<string> PositionIds, CancellationToken ct)
+        public async Task<bool> PositionAlreadyRequested(List<string> RequestedPosition, CancellationToken ct)
         {
             var postions = await _uow.JobRequests.GetAllAsync(ct);
 
             var existingPositionIds = postions
-                .Select(postions => postions.PositionId)
+                .Select(postions => postions.RequestedPosition)
                 .ToHashSet();
-            var allExist = PositionIds.All(p=>existingPositionIds.Contains(p));
+            var allExist = RequestedPosition.Any(p => existingPositionIds.Contains(p));
 
             return allExist;
 

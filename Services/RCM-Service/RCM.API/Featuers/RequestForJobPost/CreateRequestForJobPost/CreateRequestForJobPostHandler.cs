@@ -1,23 +1,33 @@
 ﻿using BuildingBlocks.CQRS;
 using MediatR;
 using RCM.API.Services;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Windows.Input;
 
 namespace RCM.API.Featuers.RequestForJobPost.CreateRequestForJobPost
 {
-    public record CreateRequestForJobPostCommand(List<string> PositionIds, int VacantPostionCount) : ICommand<CreateRequestForJobPostResponse>;
+    public record CreateRequestForJobPostCommand(List<string> RequestedPosition) : ICommand<CreateRequestForJobPostResponse>;
     public record CreateRequestForJobPostResponse(Guid id);
     internal class CreateRequestForJobPostHandler : ICommandHandler<CreateRequestForJobPostCommand, CreateRequestForJobPostResponse>
     {
         private readonly JobRequestService _jobRequestService;
-        public CreateRequestForJobPostHandler(JobRequestService jobRequestService)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public CreateRequestForJobPostHandler(JobRequestService jobRequestService, IHttpContextAccessor httpContextAccessor)
         {
             _jobRequestService = jobRequestService;
+            _httpContextAccessor = httpContextAccessor;
         }
         async Task<CreateRequestForJobPostResponse> IRequestHandler<CreateRequestForJobPostCommand, CreateRequestForJobPostResponse>
         .Handle(CreateRequestForJobPostCommand request, CancellationToken ct)
         {
-            var entityId = await _jobRequestService.CreateRequest(new CreateRequestForJobPostCommand(request.PositionIds, request.VacantPostionCount), ct);
+            //Get Logged in User dynamically from JWT claims
+            var user = _httpContextAccessor.HttpContext?.User ?? throw new Exception("User Not Found");
+
+            var requestedId = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? throw new Exception("User Not Found");
+            var requestedOrg = user.FindFirst("org")?.Value ?? "DefualtOrg";
+
+            var entityId = await _jobRequestService.CreateRequest(request, requestedId, requestedOrg, ct);
             
             return new CreateRequestForJobPostResponse(entityId);
         }
