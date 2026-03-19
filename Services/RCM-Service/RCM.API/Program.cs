@@ -67,6 +67,7 @@ builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfiles).Assembly);
 
 //UOW
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 var jwtSettings = builder.Configuration.GetSection("JWT");
 var secretKey = jwtSettings["SecretKey"];
 

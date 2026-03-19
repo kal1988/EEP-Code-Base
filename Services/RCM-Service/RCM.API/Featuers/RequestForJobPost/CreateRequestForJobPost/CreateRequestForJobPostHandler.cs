@@ -8,7 +8,7 @@ using System.Windows.Input;
 namespace RCM.API.Featuers.RequestForJobPost.CreateRequestForJobPost
 {
     public record CreateRequestForJobPostCommand(List<string> RequestedPosition) : ICommand<CreateRequestForJobPostResponse>;
-    public record CreateRequestForJobPostResponse(Guid id);
+    public record CreateRequestForJobPostResponse(List<Guid> Id);
     internal class CreateRequestForJobPostHandler : ICommandHandler<CreateRequestForJobPostCommand, CreateRequestForJobPostResponse>
     {
         private readonly JobRequestService _jobRequestService;
@@ -24,12 +24,12 @@ namespace RCM.API.Featuers.RequestForJobPost.CreateRequestForJobPost
             //Get Logged in User dynamically from JWT claims
             var user = _httpContextAccessor.HttpContext?.User ?? throw new Exception("User Not Found");
 
-            var requestedId = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? throw new Exception("User Not Found");
-            var requestedOrg = user.FindFirst("org")?.Value ?? "DefualtOrg";
+            var requesterId = user.FindFirst(ClaimTypes.Name)?.Value ?? throw new Exception("User Not Found");
+            var requesterOrg = user.FindFirst("org")?.Value ?? "DefualtOrg";
 
-            var entityId = await _jobRequestService.CreateRequest(request, requestedId, requestedOrg, ct);
+            var entityIds = await _jobRequestService.CreateRequest(request, requesterId, requesterOrg, ct);
             
-            return new CreateRequestForJobPostResponse(entityId);
+            return new CreateRequestForJobPostResponse(entityIds);
         }
     }
 }

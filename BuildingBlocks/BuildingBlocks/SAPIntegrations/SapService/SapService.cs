@@ -21,5 +21,6 @@ namespace BuildingBlocks.SAPIntegrations.SapService
             return data?.d?.results ?? new List<PositionDto>();
 
         }
+
     }
 }
