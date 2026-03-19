@@ -16,4 +16,11 @@
     <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks\BuildingBlocks.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Featuers\Permissions\CreatePermission\" />
+    <Folder Include="Featuers\Permissions\AssignPermission\" />
+    <Folder Include="Featuers\Roles\CreateRole\" />
+    <Folder Include="Featuers\Roles\AssignRole\" />
+  </ItemGroup>
+
 </Project>

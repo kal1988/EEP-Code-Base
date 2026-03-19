@@ -18,7 +18,7 @@ namespace RCM.API.Featuers.RequestForJobPost
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Policy = "cancreate")]
         public async Task<ActionResult<CreateRequestForJobPostResponse>> CreateRequest(
             [FromBody] CreateRequestForJobPostCommand command,
             CancellationToken ct)

@@ -1,8 +1,11 @@
 using BuildingBlocks.Repository;
 using BuildingBlocks.SAPIntegrations.SapService;
+using BuildingBlocks.Security;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using RCM.API.Featuers.RequestForJobPost.CreateRequestForJobPost;
+using Microsoft.IdentityModel.Tokens;
 using RCM.API.Infrastucture.Persistance;
 using RCM.API.Mapping;
 using RCM.API.Repositories;
@@ -10,8 +13,6 @@ using RCM.API.Services;
 using RCM.API.UoW;
 using System.Net.Http.Headers;
 using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -91,6 +92,9 @@ builder.Services.AddAuthentication(options =>
             Encoding.UTF8.GetBytes(secretKey!))
     };
 });
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 

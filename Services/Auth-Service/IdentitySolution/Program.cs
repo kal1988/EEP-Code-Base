@@ -1,6 +1,8 @@
+using BuildingBlocks.Security;
 using IdentitySolution.Infrastructure.Security;
 using IdentitySolution.Services.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -37,9 +39,17 @@ builder.Services.AddAuthentication(options =>
             Encoding.UTF8.GetBytes(secretKey!))
     };
 });
+
+builder.Services.AddSingleton<IAuthorizationHandler,PermissionHandler>();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+
+//TODO: add authorization schema to controller
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 app.UseHttpsRedirection();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

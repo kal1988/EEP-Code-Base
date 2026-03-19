@@ -19,13 +19,14 @@ namespace IdentitySolution.Infrastructure.Security
             _expiryMinutes = int.Parse(configuration["Jwt:ExpiryMinutes"] ?? "60");
 
         }
-        public string GenerateToken(string username)
+        public string GenerateToken(string username, List<string> permissions)
         {
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, username),
                 new Claim(ClaimTypes.Role, "Admin"),
             };
+            claims.AddRange(permissions.Select(p => new Claim("permission", p)));
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
             var creds = new SigningCredentials(key,SecurityAlgorithms.HmacSha256);
