@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RCM.API.Featuers.JobPost;
 using RCM.API.Featuers.RequestForJobPost;
 
 namespace RCM.API.Infrastucture.Persistance
@@ -9,5 +10,6 @@ namespace RCM.API.Infrastucture.Persistance
         {
         }
         public DbSet<JobRequestEntity>  JobRequest { get; set; }
+        public DbSet<JobPostEntity> JobPosts { get; set; }
     }
 }

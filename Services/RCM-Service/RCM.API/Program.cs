@@ -48,6 +48,7 @@ builder.Services.AddHttpClient<SapService>((serviceProvider, client) =>
 
 //Service Injection
 builder.Services.AddScoped<JobRequestService>();
+builder.Services.AddScoped<JobPostService>();
 
 //Registe MediatR handler
 builder.Services.AddMediatR(cfg=>cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));

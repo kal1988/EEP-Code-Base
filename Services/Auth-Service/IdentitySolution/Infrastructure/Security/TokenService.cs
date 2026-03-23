@@ -24,7 +24,6 @@ namespace IdentitySolution.Infrastructure.Security
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Role, "Admin"),
             };
             claims.AddRange(permissions.Select(p => new Claim("permission", p)));
 
