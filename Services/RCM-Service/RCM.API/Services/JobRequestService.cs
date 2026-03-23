@@ -18,19 +18,35 @@ namespace RCM.API.Services
             _mapper = mapper;
             _sapService = sapService;
         }
+        public async Task<HashSet<string>> GetAllPositionsFromSap(CancellationToken ct)
+        {
+            var sapPositions = await _sapService.GetVacantPositions();
+            return sapPositions.Select(x=>x.PositionId).ToHashSet();
+        }
+        public async Task<HashSet<string>> GetDuplicateRequests(List<string> RequestedPositions, CancellationToken ct)
+        {
+            var existingPositions = await _uow.JobRequests.GetAllAsync(ct);
+            var existingSet = existingPositions.Select(x=>x.RequestedPosition).ToHashSet();
 
+            return RequestedPositions.Where(x=>existingSet.Contains(x)).ToHashSet();
+        }
+        public async Task<bool> ValidateRequests(List<string> RequestedPositions, CancellationToken ct)
+        {
+            var allVacantPositions = await GetAllPositionsFromSap(ct);
+            var invalid = RequestedPositions.Where(x => 
+            !allVacantPositions.Contains(x)).ToList();
+
+            if (invalid.Any()) throw new Exception($"The following positions ({string.Join(",", invalid)}) are not vacant positions");
+
+            var duplicatePositions = await GetDuplicateRequests(RequestedPositions, ct);
+
+            if (duplicatePositions.Any()) throw new Exception($"The following positions ({string.Join(",",duplicatePositions)}) already have been requested");
+
+            return true;
+        }
         public async Task<List<Guid>> CreateRequest(CreateRequestForJobPostCommand command , string requesterId, string requesterOrg,CancellationToken ct)
         {
-            // Validate positions from SAP
-            var valid = await ValidatePositionsFromSap(command.RequestedPosition, ct);
-            if (!valid)
-                throw new Exception("One or more PositionIds are not vacant in SAP");
-            // Validate postions request exists
-            var exists = await PositionAlreadyRequested(command.RequestedPosition, ct);
-            if (exists)
-                throw new Exception("One or more PositionIds is already requested for");
-
-            // Generate shared Request ID
+            await ValidateRequests(command.RequestedPosition, ct);
 
             var createdIds = new List<Guid>();
             var currentTime = DateTime.UtcNow;
@@ -55,33 +71,6 @@ namespace RCM.API.Services
             await _uow.CommitAsync(ct);
 
             return createdIds;
-
-        }
-        public async Task<bool> ValidatePositionsFromSap(List<string> PositionIds, CancellationToken ct)
-        {
-            var sapPositions = await _sapService.GetVacantPositions();
-
-            if(sapPositions is null || !sapPositions.Any())
-            {
-                throw new ArgumentNullException("No Vacant Positions Found");
-            }
-            var sapPositionIds = sapPositions.Select(p=>p.PositionId).ToHashSet();
-
-            var allPositionsValid = PositionIds.All(p => sapPositionIds.Contains(p));
-
-            return allPositionsValid;
-        }
-
-        public async Task<bool> PositionAlreadyRequested(List<string> RequestedPosition, CancellationToken ct)
-        {
-            var postions = await _uow.JobRequests.GetAllAsync(ct);
-
-            var existingPositionIds = postions
-                .Select(postions => postions.RequestedPosition)
-                .ToHashSet();
-            var allExist = RequestedPosition.Any(p => existingPositionIds.Contains(p));
-
-            return allExist;
 
         }
     }
