@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc.Filters;
 using RCM.API.Featuers.JobPost;
 using RCM.API.Featuers.JobPost.CreateJobPost;
 using RCM.API.UoW;
@@ -16,28 +17,15 @@ namespace RCM.API.Services
             _uow = uow;
             _mapper = mapper;
         }
-        //Get all postions from db
-        public async Task<HashSet<string>> GetRequestedPositionsfromDb(CancellationToken ct)
-        {
-           var requestedPostions =  await _uow.JobRequests.GetAllAsync(ct);
-           return requestedPostions.Select(x=>x.RequestedPosition).ToHashSet();
-        }
-        public async Task<bool> ValidateRequestedPostions(List<string> RequestedPositions, CancellationToken ct)
-        {
-            var validatedIds = await GetRequestedPositionsfromDb(ct);
-            // if any of the requested postions are inside the db than that is valid
-            return RequestedPositions.Any(x=>validatedIds.Contains(x));
-        }
-        //Create a job post for requested position
+
         public async Task<List<Guid>> CreateJobPost(CreateJobPostCommand command, string createdById, CancellationToken ct)
         {
-            var validatedPostions = await ValidateRequestedPostions(command.RequestedPostions,ct);
-            if (!validatedPostions) throw new Exception("One or more postions are not requested for");
+            var validatedPostions = await ValidateRequestedPostions(command.RequestedPostions, ct);
 
             var createdIds = new List<Guid>();
             var currentTime = DateTime.UtcNow;
 
-            foreach(var positionId in command.RequestedPostions)
+            foreach (var positionId in command.RequestedPostions)
             {
                 var entity = _mapper.Map<JobPostEntity>(command);
                 var postId = Guid.NewGuid();
@@ -57,5 +45,31 @@ namespace RCM.API.Services
             await _uow.CommitAsync(ct);
             return createdIds;
         }
+        public async Task<HashSet<string>> GetAllRequestedPositions(CancellationToken ct)
+        {
+            var requestedPostions = await _uow.JobRequests.GetAllAsync(ct);
+            return requestedPostions.Select(x => x.RequestedPosition).ToHashSet();
+        }
+        public async Task<HashSet<string>> GetDuplicatePostedPostions(List<string> RequestedPostions, CancellationToken ct)
+        {
+            var existingPostions = await _uow.JobPosts.GetAllAsync(ct);
+            var duplicates = existingPostions.Select(x => x.Positions).ToList();
+            
+            return RequestedPostions.Where(x => duplicates.Contains(x)).ToHashSet();
+        }
+        public async Task<bool> ValidateRequestedPostions(List<string> RequestedPositions, CancellationToken ct)
+        {
+            var allPositions = await GetAllRequestedPositions(ct);
+            var missing =  RequestedPositions.Where(x=> !allPositions.Contains(x));
+
+            if (missing.Any()) throw new Exception($"The following positions {string.Join(",", missing)} are not requested for");
+
+            var duplicatePostions = await GetDuplicatePostedPostions(RequestedPositions, ct);
+
+            if (duplicatePostions.Any()) throw new Exception($"Posting for the following positions {string.Join(",", duplicatePostions)} already exists");
+
+            return true;
+        }
+
     }
 }
