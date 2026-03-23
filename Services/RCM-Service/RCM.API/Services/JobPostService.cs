@@ -52,21 +52,21 @@ namespace RCM.API.Services
         }
         public async Task<HashSet<string>> GetDuplicatePostedPostions(List<string> RequestedPostions, CancellationToken ct)
         {
-            var existingPostions = await _uow.JobPosts.GetAllAsync(ct);
-            var duplicates = existingPostions.Select(x => x.Positions).ToList();
+            var existingPositions = await _uow.JobPosts.GetAllAsync(ct);
+            var existingSet = existingPositions.Select(x => x.Positions).ToHashSet();
             
-            return RequestedPostions.Where(x => duplicates.Contains(x)).ToHashSet();
+            return RequestedPostions.Where(x => existingSet.Contains(x)).ToHashSet();
         }
         public async Task<bool> ValidateRequestedPostions(List<string> RequestedPositions, CancellationToken ct)
         {
             var allPositions = await GetAllRequestedPositions(ct);
-            var missing =  RequestedPositions.Where(x=> !allPositions.Contains(x));
+            var invalid =  RequestedPositions.Where(x=> !allPositions.Contains(x)); // no request
 
-            if (missing.Any()) throw new Exception($"The following positions {string.Join(",", missing)} are not requested for");
+            if (invalid.Any()) throw new Exception($"The following positions {string.Join(",", invalid)} are not requested for");
 
-            var duplicatePostions = await GetDuplicatePostedPostions(RequestedPositions, ct);
+            var duplicatePositions = await GetDuplicatePostedPostions(RequestedPositions, ct);
 
-            if (duplicatePostions.Any()) throw new Exception($"Posting for the following positions {string.Join(",", duplicatePostions)} already exists");
+            if (duplicatePositions.Any()) throw new Exception($"Posting for the following positions {string.Join(",", duplicatePositions)} already exists");
 
             return true;
         }
